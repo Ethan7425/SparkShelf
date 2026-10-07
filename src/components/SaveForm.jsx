@@ -7,6 +7,21 @@ function findInstagramLink(text) {
   return text.match(/(?:https?:\/\/)?(?:www\.)?instagram\.com\/\S+/i)?.[0] ?? null
 }
 
+// A Shortcut's "Copy to Clipboard" can store the link as a URL item, which
+// readText() doesn't see, so read every text-like item when the browser allows it.
+async function readClipboardText() {
+  if (!navigator.clipboard.read) return navigator.clipboard.readText()
+
+  const items = await navigator.clipboard.read()
+  const texts = []
+  for (const item of items) {
+    for (const type of ['text/uri-list', 'text/plain']) {
+      if (item.types.includes(type)) texts.push(await (await item.getType(type)).text())
+    }
+  }
+  return texts.join('\n')
+}
+
 export function normalizeInstagramLink(value) {
   const input = findInstagramLink(value) ?? value.trim()
   const withProtocol = /^https?:\/\//i.test(input) ? input : `https://${input}`
@@ -34,6 +49,7 @@ export default function SaveForm({ onAdd, tagOptions, onOpenSettings, initialLin
   const [note, setNote] = useState('')
   const [tags, setTags] = useState([])
   const [error, setError] = useState('')
+  const [pasteError, setPasteError] = useState('')
   const linkInput = useRef(null)
   const titleInput = useRef(null)
 
@@ -47,22 +63,22 @@ export default function SaveForm({ onAdd, tagOptions, onOpenSettings, initialLin
   }, [initialLink])
 
   async function pasteLink() {
-    setError('')
+    setPasteError('')
     if (!navigator.clipboard?.readText) {
-      setError('This browser can’t paste from here. Long-press the link field and choose Paste.')
+      setPasteError('This browser can’t paste from here. Long-press the link field and choose Paste.')
       return
     }
 
     try {
-      const found = findInstagramLink(await navigator.clipboard.readText())
+      const found = findInstagramLink(await readClipboardText())
       if (!found) {
-        setError('Your clipboard doesn’t have an Instagram link.')
+        setPasteError('Your clipboard doesn’t have an Instagram link.')
         return
       }
       setLink(found)
       titleInput.current?.focus()
     } catch {
-      setError('Couldn’t read the clipboard. Long-press the link field and choose Paste.')
+      setPasteError('Couldn’t read the clipboard. Long-press the link field and choose Paste.')
     }
   }
 
@@ -114,13 +130,14 @@ export default function SaveForm({ onAdd, tagOptions, onOpenSettings, initialLin
           type="text"
           inputMode="url"
           value={link}
-          onChange={(event) => setLink(event.target.value)}
+          onChange={(event) => { setLink(event.target.value); setPasteError('') }}
           required
         />
         <button className="paste-button" type="button" onClick={pasteLink}>
           <ClipboardPaste size={14} /> Paste
         </button>
       </div>
+      {pasteError && <p className="form-error" role="alert">{pasteError}</p>}
 
       <label className="field-label" htmlFor={`${idPrefix}-title`}>Title</label>
       <input

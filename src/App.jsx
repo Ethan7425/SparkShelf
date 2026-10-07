@@ -67,6 +67,12 @@ export default function App() {
     return () => document.removeEventListener('keydown', closeOnEscape)
   }, [saveDialogLink, showShortcutGuide, showSettings])
 
+  // Stop the page behind an open dialog from scrolling
+  const dialogOpen = saveDialogLink !== null || showShortcutGuide || showSettings
+  useEffect(() => {
+    document.body.classList.toggle('has-dialog', dialogOpen)
+  }, [dialogOpen])
+
   useEffect(() => {
     document.documentElement.dataset.theme = darkMode ? 'dark' : 'light'
     try {
