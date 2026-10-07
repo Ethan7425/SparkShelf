@@ -1,7 +1,7 @@
 import { BookmarkPlus, Layers3 } from 'lucide-react'
 import SaveItem from './SaveItem.jsx'
 
-export default function SavesList({ saves, allSavesCount, tagOptions, onUpdate, onDelete }) {
+export default function SavesList({ saves, allSavesCount, tagOptions, newSaveId, onUpdate, onToggleStar, onDelete }) {
   if (saves.length === 0) {
     return (
       <div className="empty-state">
@@ -15,7 +15,15 @@ export default function SavesList({ saves, allSavesCount, tagOptions, onUpdate, 
   return (
     <div className="saves-grid">
       {saves.map((save) => (
-        <SaveItem key={save.id} save={save} tagOptions={tagOptions} onUpdate={onUpdate} onDelete={onDelete} />
+        <SaveItem
+          key={save.id}
+          save={save}
+          tagOptions={tagOptions}
+          isNew={save.id === newSaveId}
+          onUpdate={onUpdate}
+          onToggleStar={onToggleStar}
+          onDelete={onDelete}
+        />
       ))}
       <div className="shelf-end" aria-hidden="true"><Layers3 size={15} /> That’s everything for now</div>
     </div>

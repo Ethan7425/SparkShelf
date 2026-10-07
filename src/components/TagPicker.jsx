@@ -27,6 +27,7 @@ export default function TagPicker({ tags, selected, onChange, onOpenSettings, la
           <button
             key={tag.name}
             className={`tag-chip${isSelected ? ' is-selected' : ''}`}
+            data-color={tag.color}
             type="button"
             aria-pressed={isSelected}
             onClick={() => toggle(tag.name)}

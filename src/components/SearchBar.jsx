@@ -1,7 +1,9 @@
-import { Search } from 'lucide-react'
+import { Search, Star } from 'lucide-react'
 import TagIcon from './TagIcon.jsx'
 
-export default function SearchBar({ query, onQueryChange, tags, selectedTag, onTagChange, sort, onSortChange }) {
+export default function SearchBar({
+  query, onQueryChange, tags, selectedTag, onTagChange, favoritesOnly, onFavoritesOnlyChange, sort, onSortChange,
+}) {
   return (
     <div className="library-toolbar">
       <div className="library-tools">
@@ -25,29 +27,36 @@ export default function SearchBar({ query, onQueryChange, tags, selectedTag, onT
         </div>
       </div>
 
-      {tags.length > 0 && (
-        <div className="tag-filter" role="group" aria-label="Filter by tag">
+      <div className="tag-filter" role="group" aria-label="Filter saves">
+        <button
+          className={`tag-chip${selectedTag || favoritesOnly ? '' : ' is-selected'}`}
+          type="button"
+          aria-pressed={!selectedTag && !favoritesOnly}
+          onClick={() => { onTagChange(''); onFavoritesOnlyChange(false) }}
+        >
+          All
+        </button>
+        <button
+          className={`tag-chip favorites-chip${favoritesOnly ? ' is-selected' : ''}`}
+          type="button"
+          aria-pressed={favoritesOnly}
+          onClick={() => onFavoritesOnlyChange(!favoritesOnly)}
+        >
+          <Star size={14} fill={favoritesOnly ? 'currentColor' : 'none'} aria-hidden="true" /> Favorites
+        </button>
+        {tags.map((tag) => (
           <button
-            className={`tag-chip${selectedTag ? '' : ' is-selected'}`}
+            key={tag.name}
+            className={`tag-chip${selectedTag === tag.name ? ' is-selected' : ''}`}
+            data-color={tag.color}
             type="button"
-            aria-pressed={!selectedTag}
-            onClick={() => onTagChange('')}
+            aria-pressed={selectedTag === tag.name}
+            onClick={() => onTagChange(selectedTag === tag.name ? '' : tag.name)}
           >
-            All
+            <TagIcon icon={tag.icon} /> {tag.name}
           </button>
-          {tags.map((tag) => (
-            <button
-              key={tag.name}
-              className={`tag-chip${selectedTag === tag.name ? ' is-selected' : ''}`}
-              type="button"
-              aria-pressed={selectedTag === tag.name}
-              onClick={() => onTagChange(selectedTag === tag.name ? '' : tag.name)}
-            >
-              <TagIcon icon={tag.icon} /> {tag.name}
-            </button>
-          ))}
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   )
 }

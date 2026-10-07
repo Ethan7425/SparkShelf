@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ArrowDownToLine, BookOpenText, Layers3, Moon, Plus, Settings2, Sparkles, Sun } from 'lucide-react'
+import Modal from './components/Modal.jsx'
 import SaveForm from './components/SaveForm.jsx'
 import SavesList from './components/SavesList.jsx'
 import SearchBar from './components/SearchBar.jsx'
 import ShortcutGuide from './components/ShortcutGuide.jsx'
 import Settings from './components/Settings.jsx'
+import Toast from './components/Toast.jsx'
 import { useSaves } from './hooks/useSaves.js'
 import { useTags } from './hooks/useTags.js'
+import { matchesSearch } from './search.js'
 import { DEFAULT_STYLE, STYLES } from './styles.js'
 import { version } from '../package.json'
 
@@ -28,10 +31,11 @@ function initialStyle() {
 }
 
 export default function App() {
-  const { saves, addSave, updateSave, deleteSave, removeTagFromSaves } = useSaves()
-  const { tags, addTag, updateTagIcon, deleteTag } = useTags(saves)
+  const { saves, addSave, updateSave, deleteSave, removeTagFromSaves, importSaves } = useSaves()
+  const { tags, addTag, updateTag, mergeTags, deleteTag } = useTags(saves)
   const [query, setQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState('')
+  const [favoritesOnly, setFavoritesOnly] = useState(false)
   const [sort, setSort] = useState('newest')
   const [darkMode, setDarkMode] = useState(initialTheme)
   const [style, setStyle] = useState(initialStyle)
@@ -39,6 +43,11 @@ export default function App() {
   const [saveDialogLink, setSaveDialogLink] = useState(null)
   const [showShortcutGuide, setShowShortcutGuide] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [toast, setToast] = useState(null)
+  const [newSaveId, setNewSaveId] = useState(null)
+
+  const showToast = useCallback((message) => setToast({ message, id: Date.now() }), [])
+  const hideToast = useCallback(() => setToast(null), [])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -91,31 +100,72 @@ export default function App() {
     }
   }, [style])
 
+  // The highlight on a freshly saved card fades after a moment
+  useEffect(() => {
+    if (!newSaveId) return undefined
+    const timer = setTimeout(() => setNewSaveId(null), 2400)
+    return () => clearTimeout(timer)
+  }, [newSaveId])
+
+  function handleAddSave(details) {
+    const save = addSave(details)
+    setNewSaveId(save.id)
+    showToast('Saved to your shelf')
+  }
+
+  function toggleStar(save) {
+    updateSave(save.id, { starred: !save.starred })
+    showToast(save.starred ? 'Removed from favorites' : 'Added to favorites')
+  }
+
   function handleDeleteTag(name) {
     deleteTag(name)
     removeTagFromSaves(name)
     if (selectedTag === name) setSelectedTag('')
   }
 
-  const visibleSaves = useMemo(() => {
-    const search = query.trim().toLocaleLowerCase('en')
-    return saves
+  const visibleSaves = useMemo(() => (
+    saves
       .filter((save) => !selectedTag || save.tags?.includes(selectedTag))
-      .filter((save) => !search || `${save.title ?? ''} ${save.link} ${save.note} ${(save.tags ?? []).join(' ')}`.toLocaleLowerCase('en').includes(search))
+      .filter((save) => !favoritesOnly || save.starred)
+      .filter((save) => matchesSearch(save, query))
       .sort((a, b) => {
         if (sort === 'alphabetical') return (a.title || a.note || a.link).localeCompare(b.title || b.note || b.link, 'en')
         return sort === 'oldest' ? a.createdAt - b.createdAt : b.createdAt - a.createdAt
       })
-  }, [saves, query, selectedTag, sort])
+  ), [saves, query, selectedTag, favoritesOnly, sort])
 
   function exportSaves() {
-    const blob = new Blob([JSON.stringify(saves, null, 2)], { type: 'application/json' })
+    const backup = { app: 'sparkshelf', version: 1, exportedAt: new Date().toISOString(), saves, tags }
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
     const downloadUrl = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = downloadUrl
     link.download = `sparkshelf-${new Date().toISOString().slice(0, 10)}.json`
     link.click()
     URL.revokeObjectURL(downloadUrl)
+  }
+
+  // Accepts this app's backups, including older ones that were just a list of saves
+  async function importBackup(file) {
+    let data
+    try {
+      data = JSON.parse(await file.text())
+    } catch {
+      return { error: true, text: 'That file isn’t a SparkShelf backup.' }
+    }
+
+    const incomingSaves = Array.isArray(data) ? data : data?.saves
+    if (!Array.isArray(incomingSaves)) return { error: true, text: 'That file isn’t a SparkShelf backup.' }
+
+    const incomingTags = Array.isArray(data?.tags) ? data.tags : []
+    const usedTagNames = incomingSaves.flatMap((save) => (Array.isArray(save?.tags) ? save.tags : []))
+    mergeTags([...incomingTags, ...usedTagNames])
+
+    const { added, skipped } = importSaves(incomingSaves)
+    const text = `Imported ${added} ${added === 1 ? 'save' : 'saves'}${skipped ? ` · ${skipped} already here or invalid` : ''}.`
+    if (added) showToast(`Imported ${added} ${added === 1 ? 'save' : 'saves'}`)
+    return { error: false, text }
   }
 
   // Opens the Home Screen web app on recent iOS; plain links always open Safari
@@ -204,10 +254,20 @@ export default function App() {
               tags={tags}
               selectedTag={selectedTag}
               onTagChange={setSelectedTag}
+              favoritesOnly={favoritesOnly}
+              onFavoritesOnlyChange={setFavoritesOnly}
               sort={sort}
               onSortChange={setSort}
             />
-            <SavesList saves={visibleSaves} allSavesCount={saves.length} tagOptions={tags} onUpdate={updateSave} onDelete={deleteSave} />
+            <SavesList
+              saves={visibleSaves}
+              allSavesCount={saves.length}
+              tagOptions={tags}
+              newSaveId={newSaveId}
+              onUpdate={updateSave}
+              onToggleStar={toggleStar}
+              onDelete={deleteSave}
+            />
           </section>
         </div>
       </main>
@@ -218,20 +278,18 @@ export default function App() {
       </footer>
 
       {saveDialogLink !== null && (
-        <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setSaveDialogLink(null)}>
-          <section className="dialog-panel" role="dialog" aria-modal="true" aria-labelledby="dialog-save-heading">
-            <SaveForm
-              key={saveDialogLink}
-              idPrefix="dialog-save"
-              initialLink={saveDialogLink}
-              onAdd={addSave}
-              tagOptions={tags}
-              onOpenSettings={() => setShowSettings(true)}
-              onCancel={() => setSaveDialogLink(null)}
-              onSaved={() => setSaveDialogLink(null)}
-            />
-          </section>
-        </div>
+        <Modal labelledBy="dialog-save-heading" onClose={() => setSaveDialogLink(null)}>
+          <SaveForm
+            key={saveDialogLink}
+            idPrefix="dialog-save"
+            initialLink={saveDialogLink}
+            onAdd={handleAddSave}
+            tagOptions={tags}
+            onOpenSettings={() => setShowSettings(true)}
+            onCancel={() => setSaveDialogLink(null)}
+            onSaved={() => setSaveDialogLink(null)}
+          />
+        </Modal>
       )}
       {showShortcutGuide && (
         <ShortcutGuide webAppUrl={webAppUrl} onClose={() => setShowShortcutGuide(false)} />
@@ -241,15 +299,18 @@ export default function App() {
           tags={tags}
           saves={saves}
           onAddTag={addTag}
-          onUpdateTagIcon={updateTagIcon}
+          onUpdateTag={updateTag}
           onDeleteTag={handleDeleteTag}
           style={style}
           onStyleChange={setStyle}
           darkMode={darkMode}
           onDarkModeChange={setDarkMode}
+          onExport={exportSaves}
+          onImport={importBackup}
           onClose={() => setShowSettings(false)}
         />
       )}
+      <Toast toast={toast} onDone={hideToast} />
     </div>
   )
 }

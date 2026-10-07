@@ -12,14 +12,16 @@ npm run dev
 ## Features
 
 - Save Instagram post and Reel links with a title, plus an optional description and tags.
-- Set up your own tags, each with an icon, in Settings (gear icon). Pick them as buttons when saving, see them on each card, and filter by tapping them above your shelf.
-- Add a link by hand with the + button next to Export.
+- Set up your own tags in Settings, each with an icon and a color. Pick them as buttons when saving and see them on every card.
+- Add a link with the + button; the Paste button reads an Instagram link from the clipboard.
+- Tap a card to open the post. On a phone, swipe a card right to favorite it or left to delete it.
 - Edit titles, descriptions and tags, favorite saves, or delete them (with a confirmation).
-- Search across titles, links, descriptions, and tags; sort by date or title.
-- Export your collection as JSON.
+- Forgiving search across titles, descriptions, tags and links that tolerates small typos; filter by tag or favorites; sort by date or title.
+- Stats in Settings: totals, saves per tag and saves per month.
+- Export a backup and import it again (Settings > Backup). Imports skip saves you already have.
 - Pick a style in Settings: Editorial, Neo-brutalism, Bento, Japandi, Frutiger Aero or VHS, each in light and dark.
+- On phones, dialogs open as bottom sheets you can drag down to close.
 - Install as a PWA and reopen the app offline after the first visit.
-- Save straight from Instagram's Share menu on iPhone with an Apple Shortcut (setup guide in the app's book icon).
 
 Your saves live in the `saves` key, your tags in `sparkshelf-tags`, and your style and mode in `sparkshelf-style` and `sparkshelf-theme` in this browser's local storage. They are not synced across devices. Export a JSON copy if you want a backup.
 
