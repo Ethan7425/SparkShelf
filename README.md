@@ -1,47 +1,33 @@
 # SparkShelf
 
-SparkShelf helps you keep track of Instagram posts you want to revisit. Saves are stored in your browser's `localStorage`; there is no account or backend.
+A cozy little shelf for the Instagram posts you actually want to find again: recipes, workouts, places, tips.
 
-## Run locally
+**Open it here:** https://ethan7425.github.io/SparkShelf/
 
-```sh
-npm install
-npm run dev
-```
+No account and no server. Everything you save stays on your device.
 
 ## Features
 
-- Save Instagram post and Reel links with a title, plus an optional description and tags.
-- Set up your own tags in Settings, each with an icon and a color. Pick them as buttons when saving and see them on every card.
-- Add a link with the + button; the Paste button reads an Instagram link from the clipboard.
-- Tap a card to open the post. On a phone, swipe a card right to favorite it or left to delete it.
-- Edit titles, descriptions and tags, favorite saves, or delete them (with a confirmation).
-- Forgiving search across titles, descriptions, tags and links that tolerates small typos; filter by tag or favorites; sort by date or title.
-- Stats in Settings: totals, saves per tag and saves per month.
-- Export a backup and import it again (Settings > Backup). Imports skip saves you already have.
-- Pick a style in Settings: Editorial, Neo-brutalism, Bento, Japandi, Frutiger Aero or VHS, each in light and dark.
-- On phones, dialogs open as bottom sheets you can drag down to close.
-- Install as a PWA and reopen the app offline after the first visit.
+- **Save posts and Reels** with a title, an optional description, and tags.
+- **Your own tags,** each with an icon and a color. Set them up once in Settings, then tap them as buttons when saving.
+- **Quick adding:** tap **+**, then **Paste**, and the Instagram link is pulled straight from your clipboard.
+- **Find things fast:** forgiving search that tolerates typos, filters by tag or favorites, and sorting by date or title.
+- **Made for your phone:** tap a card to open the post, swipe right to favorite, swipe left to delete, and drag sheets down to close them.
+- **Six styles, each in light and dark:** Editorial, Neo-brutalism, Bento, Japandi, Frutiger Aero and VHS.
+- **Stats:** totals, saves per tag and saves per month.
+- **Backups:** export everything to a file and import it again whenever you need to.
+- **Works offline** after your first visit.
 
-Your saves live in the `saves` key, your tags in `sparkshelf-tags`, and your style and mode in `sparkshelf-style` and `sparkshelf-theme` in this browser's local storage. They are not synced across devices. Export a JSON copy if you want a backup.
+## Add it to your iPhone
 
-## iPhone Shortcut
+1. Open the site in Safari, tap **Share → Add to Home Screen**, and keep **Open as Web App** on.
+2. Open SparkShelf from your Home Screen and tap the **book icon** for the Shortcut guide. It sets up **Share → Save to SparkShelf** in Instagram, which copies the link and opens the app.
+3. In the app, tap **+**, then **Paste**.
 
-The in-app guide (book icon) walks through a Shortcut that copies the shared Instagram link and opens the Home Screen web app with `webapp://<host>/SparkShelf/`. In the app, tap **+** and then **Paste**. The form pulls the Instagram link out of any surrounding text.
+## Your data
 
-The app also accepts a link through the `share` query parameter (`https://<host>/SparkShelf/?share=<encoded link>`) and opens a save dialog with it filled in. That route opens in Safari, which has storage separate from the Home Screen app.
+Saves, tags and settings are stored in your browser. They aren't synced between devices or between Safari and the Home Screen app. Export a backup from **Settings → Backup** now and then, and import it to restore your shelf or move it somewhere else.
 
-## Production build
+## Updates
 
-```sh
-npm run build
-npm run preview
-```
-
-## Deploy to GitHub Pages
-
-Every push to `main` deploys automatically. The workflow in `.github/workflows/deploy.yml` builds the site on GitHub and publishes `dist/` to Pages.
-
-One-time setup: in the repository, open **Settings > Pages > Build and deployment** and set **Source** to **GitHub Actions**. The site is served at `https://<username>.github.io/SparkShelf/`.
-
-Production builds use the base path `/SparkShelf/` (see `vite.config.js`), so the repository must keep that name. The dev server uses `/`.
+Every push to `main` rebuilds the site and publishes it to GitHub Pages automatically.
