@@ -36,4 +36,8 @@ npm run preview
 
 ## Deploy to GitHub Pages
 
-Deployment is manual. `npm run build` writes the site to `dist/` with the base path `/SparkShelf/`, so it works at `https://<username>.github.io/SparkShelf/`. Publish the contents of `dist/` to the branch your Pages site serves from (for example a `gh-pages` branch, chosen under **Settings > Pages > Build and deployment > Deploy from a branch**). The dev server still uses `/`.
+Every push to `main` deploys automatically. The workflow in `.github/workflows/deploy.yml` builds the site on GitHub and publishes `dist/` to Pages.
+
+One-time setup: in the repository, open **Settings > Pages > Build and deployment** and set **Source** to **GitHub Actions**. The site is served at `https://<username>.github.io/SparkShelf/`.
+
+Production builds use the base path `/SparkShelf/` (see `vite.config.js`), so the repository must keep that name. The dev server uses `/`.
