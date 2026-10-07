@@ -25,7 +25,9 @@ Your saves live in the `saves` key, your tags in `sparkshelf-tags`, and your sty
 
 ## iPhone Shortcut
 
-The app accepts a link through the `share` query parameter, for example `https://your-site/?share=<encoded Instagram link>`, and opens a save dialog with the link filled in. The in-app guide walks through building a Shortcut that does this. It needs the app to be deployed on an HTTPS address.
+The in-app guide (book icon) walks through a Shortcut that copies the shared Instagram link and opens the Home Screen web app with `webapp://<host>/SparkShelf/`. In the app, tap **+** and then **Paste**. The form pulls the Instagram link out of any surrounding text.
+
+The app also accepts a link through the `share` query parameter (`https://<host>/SparkShelf/?share=<encoded link>`) and opens a save dialog with it filled in. That route opens in Safari, which has storage separate from the Home Screen app.
 
 ## Production build
 

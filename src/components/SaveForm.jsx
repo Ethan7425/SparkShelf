@@ -1,9 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUpRight, Instagram, Plus, X } from 'lucide-react'
+import { ClipboardPaste, Instagram, Plus, X } from 'lucide-react'
 import TagPicker from './TagPicker.jsx'
 
+// Shared or copied text can wrap the link, e.g. "Check out this reel https://…"
+function findInstagramLink(text) {
+  return text.match(/(?:https?:\/\/)?(?:www\.)?instagram\.com\/\S+/i)?.[0] ?? null
+}
+
 export function normalizeInstagramLink(value) {
-  const input = value.trim()
+  const input = findInstagramLink(value) ?? value.trim()
   const withProtocol = /^https?:\/\//i.test(input) ? input : `https://${input}`
   let url
 
@@ -41,6 +46,26 @@ export default function SaveForm({ onAdd, tagOptions, onOpenSettings, initialLin
     }
   }, [initialLink])
 
+  async function pasteLink() {
+    setError('')
+    if (!navigator.clipboard?.readText) {
+      setError('This browser can’t paste from here. Long-press the link field and choose Paste.')
+      return
+    }
+
+    try {
+      const found = findInstagramLink(await navigator.clipboard.readText())
+      if (!found) {
+        setError('Your clipboard doesn’t have an Instagram link.')
+        return
+      }
+      setLink(found)
+      titleInput.current?.focus()
+    } catch {
+      setError('Couldn’t read the clipboard. Long-press the link field and choose Paste.')
+    }
+  }
+
   function handleSubmit(event) {
     event.preventDefault()
     setError('')
@@ -71,7 +96,7 @@ export default function SaveForm({ onAdd, tagOptions, onOpenSettings, initialLin
         <span className="form-icon"><Plus size={18} strokeWidth={2.2} /></span>
         <div>
           <h2 id={`${idPrefix}-heading`}>{initialLink ? 'Save shared post' : 'Save a find'}</h2>
-          <p>{initialLink ? 'Add a few details before it goes on your shelf.' : 'Paste an Instagram link to add it by hand.'}</p>
+          <p>{initialLink ? 'Add a few details before it goes on your shelf.' : 'Paste an Instagram link to add it.'}</p>
         </div>
         {onCancel && (
           <button className="icon-button form-close" type="button" title="Close" aria-label="Close save dialog" onClick={onCancel}>
@@ -92,7 +117,9 @@ export default function SaveForm({ onAdd, tagOptions, onOpenSettings, initialLin
           onChange={(event) => setLink(event.target.value)}
           required
         />
-        <ArrowUpRight size={16} className="input-end-icon" aria-hidden="true" />
+        <button className="paste-button" type="button" onClick={pasteLink}>
+          <ClipboardPaste size={14} /> Paste
+        </button>
       </div>
 
       <label className="field-label" htmlFor={`${idPrefix}-title`}>Title</label>

@@ -112,7 +112,8 @@ export default function App() {
     URL.revokeObjectURL(downloadUrl)
   }
 
-  const appUrlPrefix = `${window.location.origin}${import.meta.env.BASE_URL}?share=`
+  // Opens the Home Screen web app on recent iOS; plain links always open Safari
+  const webAppUrl = `webapp://${window.location.host}${import.meta.env.BASE_URL}`
 
   return (
     <div className="app-shell">
@@ -227,7 +228,7 @@ export default function App() {
         </div>
       )}
       {showShortcutGuide && (
-        <ShortcutGuide appUrlPrefix={appUrlPrefix} onClose={() => setShowShortcutGuide(false)} />
+        <ShortcutGuide webAppUrl={webAppUrl} onClose={() => setShowShortcutGuide(false)} />
       )}
       {showSettings && (
         <Settings
